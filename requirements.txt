@@ -1,3 +1,3 @@
 hvplot
 panel
-git+https://github.com/holychikenz/IdlePy#egg=idlescape
+"https://github.com/holychikenz/IdlePy/dist/idlescape-0.0.1-py3-none-any.whl"
