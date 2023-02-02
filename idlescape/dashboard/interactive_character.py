@@ -8,7 +8,9 @@ import json
 
 class InteractiveCharacter:
 
-    def __init__(self, item_file, location_file):
+    def __init__(self, **kwargs):
+        item_file = kwargs.get("item_file", "data/items.json")
+        location_file = kwargs.get("location_file", "data/locations.json")
         self.level_widget_list = None
         self.equipment_widget_list = None
         self.enchant_widget_list = None

@@ -2,10 +2,7 @@ import panel as pn
 import hvplot.pandas
 import json
 from idlescape.dashboard import InteractiveCharacter
-#from idlescape import *
 
-location_file = "data/locations.json"
-item_file = "data/items.json"
 html = pn.pane.HTML('')
 
 
@@ -23,7 +20,7 @@ def update_cookie():
 
 
 pn.state.onload(update_cookie)
-pc = InteractiveCharacter(item_file, location_file)
+pc = InteractiveCharacter()
 
 action_selector = pn.widgets.Select(name='Action', options={'Mining': pc.mining, 'Foraging': pc.foraging,
                                                             "Fishing": pc.fishing})

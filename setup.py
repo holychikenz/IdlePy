@@ -10,4 +10,5 @@ setup(
         name = "idlescape",
         version = VERSION,
         packages=['idlescape', 'idlescape.dashboard'],
+        package_data={"idlescape": ["data/*"]},
 )
