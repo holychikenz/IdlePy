@@ -50,14 +50,14 @@ class Fishing(Gathering):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.bait_power
         gear_enchant = self.player.enchantments.get('pungentBait', 0) * 3 \
-                       - self.player.enchantments.get('fishingMagnetism') * 2
+                       - self.player.enchantments.get('fishingMagnetism', 0) * 2
         bait = self.player.bait_bait_power * (1 + self.player.enchantments.get('deadliestCatch', 0) * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 
     def _bonus_rarity(self):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.bonus_rarity
-        gear_enchant = self.player.enchantments.get('fishingMagnetism') * 2
+        gear_enchant = self.player.enchantments.get('fishingMagnetism', 0) * 2
         bait = self.player.bait_bonus_rarity * (1 + self.player.enchantments.get('deadliestCatch', 0) * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 
@@ -65,7 +65,7 @@ class Fishing(Gathering):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.reel_power
         gear_enchant = self.player.enchantments.get('reinforcedLine', 0) * 3 \
-                       - self.player.enchantments.get('fishingMagnetism') * 2
+                       - self.player.enchantments.get('fishingMagnetism', 0) * 2
         bait = self.player.bait_reel_power * (1 + self.player.enchantments.get('deadliestCatch', 0) * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 
