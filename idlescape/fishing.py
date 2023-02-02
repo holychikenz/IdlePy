@@ -246,14 +246,25 @@ try:
             total_resources += np.floor(np.random.rand() * delta + small)
         return total_resources / trials
 
+    @jit
+    def _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level, bait_power,
+                                                  fishing, trials):
+        node_resources = np.array(
+            [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1)) for
+             _ in range(trials)])
+        min_node_count = min(node_resources)
+        max_node_count = max(node_resources)
+        node_average = []
+        for total_node_resources in range(min_node_count, max_node_count + 1):
+            total_tries_sub = 0.0
+            for n_res in range(total_node_resources, 0, -1):
+                never_tell_me_the_odds = min(1.0, base_chance + fishing * 0.025 + n_res / 48)
+                total_tries_sub += 1 / never_tell_me_the_odds
+            node_average.append(total_tries_sub)
+        node_average = np.array(node_average)
+        return np.mean(node_average[(node_resources - min_node_count)])
+
 except ImportError:
-    def jit(*args, **kwargs):
-        def decorator(func):
-            return func
-
-        return decorator
-
-
     def _calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, trials):
         maximum_node_size = np.floor(max_base + (np.random.rand(trials) * (fishing_level - zone_level) / 8) + np.floor(
             np.random.rand(trials) * bait_power / 20))
@@ -271,20 +282,19 @@ except ImportError:
         return total_resources / trials
 
 
-@jit
-def _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level, bait_power,
-                                              fishing, trials):
-    node_resources = np.array(
-        [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1)) for
-         _ in range(trials)])
-    min_node_count = min(node_resources)
-    max_node_count = max(node_resources)
-    node_average = []
-    for total_node_resources in range(min_node_count, max_node_count + 1):
-        total_tries_sub = 0.0
-        for n_res in range(total_node_resources, 0, -1):
-            never_tell_me_the_odds = min(1.0, base_chance + fishing * 0.025 + n_res / 48)
-            total_tries_sub += 1 / never_tell_me_the_odds
-        node_average.append(total_tries_sub)
-    node_average = np.array(node_average)
-    return np.mean(node_average[(node_resources - min_node_count)])
+    def _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level, bait_power,
+                                                  fishing, trials):
+        node_resources = np.array(
+            [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1)) for
+             _ in range(trials)])
+        min_node_count = min(node_resources)
+        max_node_count = max(node_resources)
+        node_average = []
+        for total_node_resources in range(min_node_count, max_node_count + 1):
+            total_tries_sub = 0.0
+            for n_res in range(total_node_resources, 0, -1):
+                never_tell_me_the_odds = min(1.0, base_chance + fishing * 0.025 + n_res / 48)
+                total_tries_sub += 1 / never_tell_me_the_odds
+            node_average.append(total_tries_sub)
+        node_average = np.array(node_average)
+        return np.mean(node_average[(node_resources - min_node_count)])
