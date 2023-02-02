@@ -53,6 +53,7 @@ import json
 from idlescape.dashboard import InteractiveCharacter
 
 html = pn.pane.HTML('')
+pn.config.throttled = True
 
 
 def update_cookie():

@@ -22,7 +22,7 @@ class InteractiveCharacter:
         self.player = Character(datafile=item_file, **self.player_stats)
         self.mining = Mining(self.player, location_file)
         self.foraging = Foraging(self.player, location_file)
-        self.fishing = Fishing(self.player, location_file, accuracy=10000)
+        self.fishing = Fishing(self.player, location_file, accuracy=1000)
         # Player equipment sets (one for each action)
         self.player_mining_equipment = json.loads(pn.state.cookies.get("mining_equipment", "{}").replace("'", "\""))
         self.player_foraging_equipment = json.loads(pn.state.cookies.get("foraging_equipment", "{}").replace("'", "\""))
