@@ -9,5 +9,5 @@ def read(fname):
 setup(
         name = "idlescape",
         version = VERSION,
-        packages=['idlescape'],
+        packages=['idlescape', 'idlescape.dashboard'],
 )
