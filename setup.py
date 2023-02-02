@@ -18,6 +18,6 @@ setup(
     version = VERSION,
     packages=['idlescape', 'idlescape.dashboard'],
     package_data={"idlescape": ["data/*"]},
-    ext_package="idlescape_cpp",
-    ext_modules=extensions,
+    #ext_package="idlescape_cpp",
+    #ext_modules=extensions,
 )
