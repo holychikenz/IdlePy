@@ -1,7 +1,8 @@
 import panel as pn
 import hvplot.pandas
 import json
-from idlescape import *
+from idlescape.dashboard import InteractiveCharacter
+#from idlescape import *
 
 location_file = "data/locations.json"
 item_file = "data/items.json"
