@@ -1,4 +1,5 @@
 import json
+import importlib.resources as ires
 
 
 class Character:
@@ -7,7 +8,7 @@ class Character:
     """
 
     def __init__(self, **kwargs):
-        self.item_data = select_items(kwargs.get("datafile", "data/items.json"))
+        self.item_data = select_items(kwargs.get("datafile", str(ires.path('idlescape', 'data'))+"/items.json"))
         self.item_lookup_table = {v['name']:k for (k, v) in self.item_data.items()}
         self.equipment_set = kwargs.get("equipment_set", None)
         # Fishing

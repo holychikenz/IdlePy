@@ -4,13 +4,14 @@ from ..foraging import Foraging
 from ..mining import Mining
 from ..fishing import Fishing
 import json
+import importlib.resources as ires
 
 
 class InteractiveCharacter:
 
     def __init__(self, **kwargs):
-        item_file = kwargs.get("item_file", "data/items.json")
-        location_file = kwargs.get("location_file", "data/locations.json")
+        item_file = kwargs.get("item_file", str(ires.path('idlescape', 'data')) + "/items.json")
+        location_file = kwargs.get("location_file",str(ires.path('idlescape', 'data')) + "/locations.json")
         self.level_widget_list = None
         self.equipment_widget_list = None
         self.enchant_widget_list = None
