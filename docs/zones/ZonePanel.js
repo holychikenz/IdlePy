@@ -12,6 +12,9 @@ async function startApplication() {
   console.log("Loading pyodide!");
   self.postMessage({type: 'status', msg: 'Loading pyodide'})
   self.pyodide = await loadPyodide();
+  let mountDir = "/mnt";
+  pyodide.FS.mkdir(mountDir);
+  pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
   self.pyodide.globals.set("sendPatch", sendPatch);
   console.log("Loaded!");
   await self.pyodide.loadPackage("micropip");
@@ -51,6 +54,13 @@ import panel as pn
 import hvplot.pandas
 import json
 from idlescape.dashboard import InteractiveCharacter
+
+import os
+print('First list', os.listdir('/mnt'))
+with open('/mnt/my_file.txt', 'w') as fh:
+    fh.write("hello world")
+print('Second list', os.listdir('/mnt'))
+
 
 html = pn.pane.HTML('')
 pn.config.throttled = True
