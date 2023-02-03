@@ -15,6 +15,7 @@ async function startApplication() {
   let mountDir = "/mnt";
   pyodide.FS.mkdir(mountDir);
   pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
+  pyodide.FS.syncfs();
   self.pyodide.globals.set("sendPatch", sendPatch);
   console.log("Loaded!");
   await self.pyodide.loadPackage("micropip");
@@ -136,6 +137,7 @@ await write_doc()
     });
     throw e
   }
+  pyodide.FS.syncfs();
 }
 
 self.onmessage = async (event) => {
