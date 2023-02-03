@@ -148,7 +148,7 @@ await write_doc()
     });
     throw e
   }
-  //setInterval( ()=>await nativefs.syncfs(), 1000 );
+  setInterval( ()=>await nativefs.syncfs(), 1000 );
 }
 
 self.onmessage = async (event) => {
