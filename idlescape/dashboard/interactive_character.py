@@ -1,5 +1,3 @@
-import os.path
-
 import panel as pn
 from ..character import Character, EquipmentSet
 from ..foraging import Foraging
@@ -7,6 +5,7 @@ from ..mining import Mining
 from ..fishing import Fishing
 import importlib.resources as ires
 import json
+import os
 
 
 class InteractiveCharacter:
