@@ -7,7 +7,7 @@ from diskcache import FanoutCache
 import importlib.resources as ires
 
 EXPIRE = 1000 * 86400
-CACHE_DIRECTORY = "cache"
+CACHE_DIRECTORY = "idlecache"
 
 
 class InteractiveCharacter:

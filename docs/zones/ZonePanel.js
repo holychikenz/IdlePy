@@ -21,7 +21,7 @@ async function startApplication() {
     }
   }
 
-  let mountDir = "/mnt";
+  let mountDir = "/idlecache";
   const nativefs = await pyodide.mountNativeFS(mountDir, dirHandle);
 
   //pyodide.FS.mkdir(mountDir);
@@ -68,10 +68,10 @@ import json
 from idlescape.dashboard import InteractiveCharacter
 
 import os
-print('First list', os.listdir('/mnt'))
-with open('/mnt/my_file.txt', 'w') as fh:
+print('First list', os.listdir('/idlecache'))
+with open('/idlecache/my_file.txt', 'w') as fh:
     fh.write("hello world")
-print('Second list', os.listdir('/mnt'))
+print('Second list', os.listdir('/idlecache'))
 
 
 html = pn.pane.HTML('')
