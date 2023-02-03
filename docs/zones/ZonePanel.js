@@ -12,6 +12,15 @@ async function startApplication() {
   console.log("Loading pyodide!");
   self.postMessage({type: 'status', msg: 'Loading pyodide'})
   self.pyodide = await loadPyodide();
+  const dirHandle = await showDirectoryPicker();
+  if ((await dirHandle.queryPermission({mode: "readwrite" })) !== "granted") {
+    if (
+      (await dirHandle.requestPermission({ mode: "readwrite" })) !== "granted"
+    ) {
+      throw Error("Unable to read and write directory");
+    }
+  }
+  const nativefs = await pyodide.mountNativeFS("/idlescape", dirHandle);
   self.pyodide.globals.set("sendPatch", sendPatch);
   console.log("Loaded!");
   await self.pyodide.loadPackage("micropip");
@@ -54,6 +63,8 @@ from idlescape.dashboard import InteractiveCharacter
 
 html = pn.pane.HTML('')
 pn.config.throttled = True
+import os
+print('Hello idle world', os.listdir('/idlescape'))
 
 pc = InteractiveCharacter()
 
