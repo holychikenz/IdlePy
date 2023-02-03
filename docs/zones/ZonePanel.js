@@ -12,10 +12,21 @@ async function startApplication() {
   console.log("Loading pyodide!");
   self.postMessage({type: 'status', msg: 'Loading pyodide'})
   self.pyodide = await loadPyodide();
+  const dirHandle = await window.showDirectoryPicker();
+  if ((await dirHandle.queryPermission({ mode: "readwrite" })) !== "granted") {
+    if (
+      (await dirHandle.requestPermission({ mode: "readwrite" })) !== "granted"
+    ) {
+      throw Error("Unable to read and write directory");
+    }
+  }
+
   let mountDir = "/mnt";
-  pyodide.FS.mkdir(mountDir);
-  pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
-  pyodide.FS.syncfs();
+  const nativefs = await.pyodide.mountNativeFS(mountDir, dirHandle);
+
+  //pyodide.FS.mkdir(mountDir);
+  //pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
+  await nativefs.syncfs();
   self.pyodide.globals.set("sendPatch", sendPatch);
   console.log("Loaded!");
   await self.pyodide.loadPackage("micropip");
@@ -137,7 +148,7 @@ await write_doc()
     });
     throw e
   }
-  setInterval( ()=>pyodide.FS.syncfs(), 1000 );
+  setInterval( ()=>await nativefs.syncfs(), 1000 );
 }
 
 self.onmessage = async (event) => {
