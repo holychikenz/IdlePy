@@ -22,7 +22,7 @@ async function startApplication() {
   }
 
   let mountDir = "/mnt";
-  const nativefs = await.pyodide.mountNativeFS(mountDir, dirHandle);
+  const nativefs = await pyodide.mountNativeFS(mountDir, dirHandle);
 
   //pyodide.FS.mkdir(mountDir);
   //pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
