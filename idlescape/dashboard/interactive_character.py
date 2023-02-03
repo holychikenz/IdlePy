@@ -3,13 +3,17 @@ from ..character import Character, EquipmentSet
 from ..foraging import Foraging
 from ..mining import Mining
 from ..fishing import Fishing
-import json
+from diskcache import FanoutCache
 import importlib.resources as ires
+
+EXPIRE = 1000 * 86400
+CACHE_DIRECTORY = "cache"
 
 
 class InteractiveCharacter:
 
     def __init__(self, **kwargs):
+        self.cache = FanoutCache(CACHE_DIRECTORY)
         item_file = kwargs.get("item_file", str(ires.path('idlescape', 'data')) + "/items.json")
         location_file = kwargs.get("location_file",str(ires.path('idlescape', 'data')) + "/locations.json")
         self.level_widget_list = None
@@ -17,7 +21,7 @@ class InteractiveCharacter:
         self.enchant_widget_list = None
         self.callback = None
         # Player Stats and Levels
-        cached_stats = pn.state.cache.get("interactive_character", {})
+        cached_stats = self.cache.get("interactive_character", {})
         self.player_stats = cached_stats.get("player_stats", {})
         self.player = Character(datafile=item_file, **self.player_stats)
         self.mining = Mining(self.player, location_file)
@@ -49,7 +53,7 @@ class InteractiveCharacter:
         for widget in self.enchant_widget_list:
             widget.update_value()
         self.player_stats['enchantments'] = self.player.enchantments
-        pn.state.cache['interactive_character'] = {
+        self.cache['interactive_character'] = {
             'player_stats': self.player_stats,
             'mining_equipment': self.player_mining_equipment,
             'foraging_equipment': self.player_foraging_equipment,
