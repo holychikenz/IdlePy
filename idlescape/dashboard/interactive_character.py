@@ -13,7 +13,7 @@ class InteractiveCharacter:
     CACHE_FILE = "/idlecache/cache.json"
 
     def __init__(self, **kwargs):
-        self.cache = FanoutCache(CACHE_DIRECTORY)
+        #self.cache = FanoutCache(CACHE_DIRECTORY)
         item_file = kwargs.get("item_file", str(ires.path('idlescape', 'data')) + "/items.json")
         location_file = kwargs.get("location_file", str(ires.path('idlescape', 'data')) + "/locations.json")
         self.level_widget_list = None
