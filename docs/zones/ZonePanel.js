@@ -13,7 +13,6 @@ async function startApplication() {
   self.postMessage({type: 'status', msg: 'Loading pyodide'})
   self.pyodide = await loadPyodide();
   let mountDir = "/mnt";
-  let nativeFS = await pyodide.mountNativeFS(mountDir, 
   pyodide.FS.mkdir(mountDir);
   pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
   pyodide.FS.syncfs();
