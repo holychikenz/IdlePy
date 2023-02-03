@@ -12,7 +12,7 @@ async function startApplication() {
   console.log("Loading pyodide!");
   self.postMessage({type: 'status', msg: 'Loading pyodide'})
   self.pyodide = await loadPyodide();
-  const dirHandle = await window.showDirectoryPicker();
+  const dirHandle = await navigator.storage.getDirectory();
   if ((await dirHandle.queryPermission({ mode: "readwrite" })) !== "granted") {
     if (
       (await dirHandle.requestPermission({ mode: "readwrite" })) !== "granted"
