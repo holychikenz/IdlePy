@@ -13,6 +13,7 @@ async function startApplication() {
   self.postMessage({type: 'status', msg: 'Loading pyodide'})
   self.pyodide = await loadPyodide();
   let mountDir = "/mnt";
+  let nativeFS = await pyodide.mountNativeFS(mountDir, 
   pyodide.FS.mkdir(mountDir);
   pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
   pyodide.FS.syncfs();
@@ -137,7 +138,7 @@ await write_doc()
     });
     throw e
   }
-  pyodide.FS.syncfs();
+  setInterval( pyodide.FS.syncfs, 1000 );
 }
 
 self.onmessage = async (event) => {
