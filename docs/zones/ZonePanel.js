@@ -23,10 +23,7 @@ async function startApplication() {
 
   let mountDir = "/idlecache";
   const nativefs = await pyodide.mountNativeFS(mountDir, dirHandle);
-
-  //pyodide.FS.mkdir(mountDir);
-  //pyodide.FS.mount( pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir );
-  await nativefs.syncfs();
+  setInterval( ()=>nativefs.syncfs(), 1000 );
   self.pyodide.globals.set("sendPatch", sendPatch);
   console.log("Loaded!");
   await self.pyodide.loadPackage("micropip");
@@ -66,13 +63,6 @@ import panel as pn
 import hvplot.pandas
 import json
 from idlescape.dashboard import InteractiveCharacter
-
-import os
-print('First list', os.listdir('/idlecache'))
-with open('/idlecache/my_file.txt', 'w') as fh:
-    fh.write("hello world")
-print('Second list', os.listdir('/idlecache'))
-
 
 html = pn.pane.HTML('')
 pn.config.throttled = True
@@ -148,7 +138,6 @@ await write_doc()
     });
     throw e
   }
-  setInterval( ()=>nativefs.syncfs(), 1000 );
 }
 
 self.onmessage = async (event) => {

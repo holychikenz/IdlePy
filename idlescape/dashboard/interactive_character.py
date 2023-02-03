@@ -11,9 +11,9 @@ import json
 
 class InteractiveCharacter:
     CACHE_FILE = "/idlecache/cache.json"
+    LOCAL_CACHE_FILE = "cache.json"
 
     def __init__(self, **kwargs):
-        #self.cache = FanoutCache(CACHE_DIRECTORY)
         item_file = kwargs.get("item_file", str(ires.path('idlescape', 'data')) + "/items.json")
         location_file = kwargs.get("location_file", str(ires.path('idlescape', 'data')) + "/locations.json")
         self.level_widget_list = None
@@ -40,12 +40,21 @@ class InteractiveCharacter:
         if os.path.exists(self.CACHE_FILE):
             with open(self.CACHE_FILE) as cf:
                 self.cached_stats = json.load(cf)
+        elif os.path.exists(self.LOCAL_CACHE_FILE):
+            with open(self.LOCAL_CACHE_FILE) as cf:
+                self.cached_stats = json.load(cf)
         else:
             self.cached_stats = {}
 
     def save_cache(self):
-        with open(self.CACHE_FILE, 'w') as cf:
-            json.dump(self.cached_stats, cf)
+        try:
+            with open(self.CACHE_FILE, 'w') as cf:
+                json.dump(self.cached_stats, cf)
+        except FileNotFoundError:
+            with open(self.LOCAL_CACHE_FILE, 'w') as cf:
+                json.dump(self.cached_stats, cf)
+
+
 
 
     def _apply_connectors_(self):
