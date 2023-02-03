@@ -55,21 +55,6 @@ from idlescape.dashboard import InteractiveCharacter
 html = pn.pane.HTML('')
 pn.config.throttled = True
 
-
-def update_cookie():
-    v = (pn.state.cookies.get("interactive_character", "{}"))
-    mining_equipment = (pn.state.cookies.get("mining_equipment", "{}"))
-    foraging_equipment = (pn.state.cookies.get("foraging_equipment", "{}"))
-    fishing_equipment = (pn.state.cookies.get("fishing_equipment", "{}"))
-    html.object = f"""
-    <script>document.cookie="interactive_character={v}; expires=Tue, 01 Jan 2030;"</script>
-    <script>document.cookie="mining_equipment={mining_equipment}; expires=Tue, 01 Jan 2030;"</script>
-    <script>document.cookie="foraging_equipment={foraging_equipment}; expires=Tue, 01 Jan 2030;"</script>
-    <script>document.cookie="fishing_equipment={fishing_equipment}; expires=Tue, 01 Jan 2030;"</script>
-    """
-
-
-pn.state.onload(update_cookie)
 pc = InteractiveCharacter()
 
 action_selector = pn.widgets.Select(name='Action', options={'Mining': pc.mining, 'Foraging': pc.foraging,
@@ -101,7 +86,6 @@ selection_column = pn.Column(action_selector, zone_selector)
 
 def update(event):
     zone_selector.param.trigger('value')
-    update_cookie()
 
 
 pc.assign_callback(update)

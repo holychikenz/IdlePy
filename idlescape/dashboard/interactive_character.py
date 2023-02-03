@@ -16,17 +16,17 @@ class InteractiveCharacter:
         self.equipment_widget_list = None
         self.enchant_widget_list = None
         self.callback = None
-        # Hacky Hack
         # Player Stats and Levels
-        self.player_stats = json.loads(pn.state.cookies.get("interactive_character", "{}").replace("'", "\""))
+        cached_stats = pn.state.cache.get("interactive_character", {})
+        self.player_stats = cached_stats.get("player_stats", {})
         self.player = Character(datafile=item_file, **self.player_stats)
         self.mining = Mining(self.player, location_file)
         self.foraging = Foraging(self.player, location_file)
         self.fishing = Fishing(self.player, location_file, accuracy=1000)
         # Player equipment sets (one for each action)
-        self.player_mining_equipment = json.loads(pn.state.cookies.get("mining_equipment", "{}").replace("'", "\""))
-        self.player_foraging_equipment = json.loads(pn.state.cookies.get("foraging_equipment", "{}").replace("'", "\""))
-        self.player_fishing_equipment = json.loads(pn.state.cookies.get("fishing_equipment", "{}").replace("'", "\""))
+        self.player_mining_equipment = cached_stats.get("mining_equipment", {})
+        self.player_foraging_equipment = cached_stats.get("foraging_equipment", {})
+        self.player_fishing_equipment = cached_stats.get("fishing_equipment", {})
         self.mining_gear = EquipmentSet(self.player.item_data, **self.player_mining_equipment)
         self.foraging_gear = EquipmentSet(self.player.item_data, **self.player_foraging_equipment)
         self.fishing_gear = EquipmentSet(self.player.item_data, **self.player_fishing_equipment)
@@ -49,10 +49,12 @@ class InteractiveCharacter:
         for widget in self.enchant_widget_list:
             widget.update_value()
         self.player_stats['enchantments'] = self.player.enchantments
-        pn.state.cookies["interactive_character"] = self.player_stats
-        pn.state.cookies["mining_equipment"] = self.player_mining_equipment
-        pn.state.cookies["foraging_equipment"] = self.player_foraging_equipment
-        pn.state.cookies["fishing_equipment"] = self.player_fishing_equipment
+        pn.state.cache['interactive_character'] = {
+            'player_stats': self.player_stats,
+            'mining_equipment': self.player_mining_equipment,
+            'foraging_equipment': self.player_foraging_equipment,
+            'fishing_equipment': self.player_fishing_equipment,
+        }
         # Need to figure this out
         self.callback(event)
 
