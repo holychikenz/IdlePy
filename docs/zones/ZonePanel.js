@@ -137,7 +137,7 @@ await write_doc()
     });
     throw e
   }
-  setInterval( pyodide.FS.syncfs, 1000 );
+  setInterval( ()=>pyodide.FS.syncfs(), 1000 );
 }
 
 self.onmessage = async (event) => {
