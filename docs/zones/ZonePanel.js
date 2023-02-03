@@ -12,7 +12,7 @@ async function startApplication() {
   console.log("Loading pyodide!");
   self.postMessage({type: 'status', msg: 'Loading pyodide'})
   self.pyodide = await loadPyodide();
-  let mountDir = "/idlescape"
+  let mountDir = "/"
   pyodide.FS.mkdir(mountDir);
   pyodide.FS.mount(pyodide.FS.filesystems.IDBFS, {root: "."}, mountDir);
   self.pyodide.globals.set("sendPatch", sendPatch);
@@ -58,7 +58,7 @@ from idlescape.dashboard import InteractiveCharacter
 html = pn.pane.HTML('')
 pn.config.throttled = True
 import os
-print('Hello idle world', os.listdir('/idlescape'))
+print('Hello idle world', os.listdir('/'))
 
 pc = InteractiveCharacter()
 
