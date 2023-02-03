@@ -1,39 +1,52 @@
+import os.path
+
 import panel as pn
 from ..character import Character, EquipmentSet
 from ..foraging import Foraging
 from ..mining import Mining
 from ..fishing import Fishing
-from diskcache import FanoutCache
 import importlib.resources as ires
-
-EXPIRE = 1000 * 86400
-CACHE_DIRECTORY = "/idlecache"
+import json
 
 
 class InteractiveCharacter:
+    CACHE_FILE = "/idlecache/cache.json"
 
     def __init__(self, **kwargs):
         self.cache = FanoutCache(CACHE_DIRECTORY)
         item_file = kwargs.get("item_file", str(ires.path('idlescape', 'data')) + "/items.json")
-        location_file = kwargs.get("location_file",str(ires.path('idlescape', 'data')) + "/locations.json")
+        location_file = kwargs.get("location_file", str(ires.path('idlescape', 'data')) + "/locations.json")
         self.level_widget_list = None
         self.equipment_widget_list = None
         self.enchant_widget_list = None
         self.callback = None
+        self.cached_stats = None
         # Player Stats and Levels
-        cached_stats = self.cache.get("interactive_character", {})
-        self.player_stats = cached_stats.get("player_stats", {})
+        self.read_cache()
+        self.player_stats = self.cached_stats.get("player_stats", {})
         self.player = Character(datafile=item_file, **self.player_stats)
         self.mining = Mining(self.player, location_file)
         self.foraging = Foraging(self.player, location_file)
         self.fishing = Fishing(self.player, location_file, accuracy=1000)
         # Player equipment sets (one for each action)
-        self.player_mining_equipment = cached_stats.get("mining_equipment", {})
-        self.player_foraging_equipment = cached_stats.get("foraging_equipment", {})
-        self.player_fishing_equipment = cached_stats.get("fishing_equipment", {})
+        self.player_mining_equipment = self.cached_stats.get("mining_equipment", {})
+        self.player_foraging_equipment = self.cached_stats.get("foraging_equipment", {})
+        self.player_fishing_equipment = self.cached_stats.get("fishing_equipment", {})
         self.mining_gear = EquipmentSet(self.player.item_data, **self.player_mining_equipment)
         self.foraging_gear = EquipmentSet(self.player.item_data, **self.player_foraging_equipment)
         self.fishing_gear = EquipmentSet(self.player.item_data, **self.player_fishing_equipment)
+
+    def read_cache(self):
+        if os.path.exists(self.CACHE_FILE):
+            with open(self.CACHE_FILE) as cf:
+                self.cached_stats = json.load(cf)
+        else:
+            self.cached_stats = {}
+
+    def save_cache(self):
+        with open(self.CACHE_FILE, 'w') as cf:
+            json.dump(self.cached_stats, cf)
+
 
     def _apply_connectors_(self):
         pass
@@ -53,12 +66,13 @@ class InteractiveCharacter:
         for widget in self.enchant_widget_list:
             widget.update_value()
         self.player_stats['enchantments'] = self.player.enchantments
-        self.cache['interactive_character'] = {
+        self.cached_stats = {
             'player_stats': self.player_stats,
             'mining_equipment': self.player_mining_equipment,
             'foraging_equipment': self.player_foraging_equipment,
             'fishing_equipment': self.player_fishing_equipment,
         }
+        self.save_cache()
         # Need to figure this out
         self.callback(event)
 
