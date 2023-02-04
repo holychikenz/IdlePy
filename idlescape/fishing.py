@@ -1,10 +1,14 @@
+from abc import ABC
+
 from .gathering import *
 from .character import *
 import numpy as np
 
 
-class Fishing(Gathering):
+class Fishing(Gathering, ABC):
     player = None
+    valid_enchants = ['gathering', 'empoweredGathering', 'haste', 'pungentBait', 'deadliestCatch', 'fishingMagnetism',
+                      'reinforcedLine', 'fiberFinder', 'fishing']
 
     def __init__(self, character, location_data, **kwargs):
         self.player = character
@@ -27,11 +31,6 @@ class Fishing(Gathering):
         self.alt_experience = kwargs.get("alt_experience", None)
         # Fishing gear
 
-    # Fishing specific attributes
-    def fishing_bonus(self):
-        # Enchantments, gear
-        pass
-
     def get_action_primary_attribute(self):
         return 'fishing_level'
 
@@ -43,30 +42,30 @@ class Fishing(Gathering):
         set_bonus = 1 + self.player.fishing_set_bonus
         level = self.player.fishing_level
         gear_base = self.player.fishing_bonus
-        bait = self.player.bait_fishing_bonus * (1 + self.player.enchantments.get('deadliestCatch', 0) * 0.05)
+        bait = self.player.bait_fishing_bonus * (1 + self.get_enchant('deadliestCatch') * 0.05)
         return level + bait + gear_base * set_bonus
 
     def _bait_power(self):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.bait_power
-        gear_enchant = self.player.enchantments.get('pungentBait', 0) * 3 \
-                       - self.player.enchantments.get('fishingMagnetism', 0) * 2
-        bait = self.player.bait_bait_power * (1 + self.player.enchantments.get('deadliestCatch', 0) * 0.05)
+        gear_enchant = self.get_enchant('pungentBait') * 3 \
+                       - self.get_enchant('fishingMagnetism') * 2
+        bait = self.player.bait_bait_power * (1 + self.get_enchant('deadliestCatch') * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 
     def _bonus_rarity(self):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.bonus_rarity
-        gear_enchant = self.player.enchantments.get('fishingMagnetism', 0) * 2
-        bait = self.player.bait_bonus_rarity * (1 + self.player.enchantments.get('deadliestCatch', 0) * 0.05)
+        gear_enchant = self.get_enchant('fishingMagnetism') * 2
+        bait = self.player.bait_bonus_rarity * (1 + self.get_enchant('deadliestCatch') * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 
     def _reel_power(self):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.reel_power
-        gear_enchant = self.player.enchantments.get('reinforcedLine', 0) * 3 \
-                       - self.player.enchantments.get('fishingMagnetism', 0) * 2
-        bait = self.player.bait_reel_power * (1 + self.player.enchantments.get('deadliestCatch', 0) * 0.05)
+        gear_enchant = self.get_enchant('reinforcedLine') * 3 \
+                       - self.get_enchant('fishingMagnetism') * 2
+        bait = self.player.bait_reel_power * (1 + self.get_enchant('deadliestCatch') * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 
     def _node_rates(self, location):
@@ -90,7 +89,7 @@ class Fishing(Gathering):
             frequency = (loot.frequency + self._bonus_rarity()) * (1 + self._effective_level() / 360)
             frequency = min(frequency, loot.max_frequency)
             if loot.item_class == "fiber":
-                frequency = frequency * (1 + self.player.enchantments.get('fiberFinder', 0) * 0.25)
+                frequency = frequency * (1 + self.get_enchant('fiberFinder') * 0.25)
             boosted_frequency = max(0, frequency)
             frequency_dict[idd] = max(0, frequency)
             boosted_frequency_dict[idd] = boosted_frequency
@@ -99,7 +98,7 @@ class Fishing(Gathering):
         return {k: v / total_frequency for (k, v) in boosted_frequency_dict.items()}
 
     def _node_base_chance(self, location):
-        fishing_enchant = self.player.enchantments.get("fishing", 0)  # TODO, add to player.enchantments
+        fishing_enchant = self.get_enchant("fishing")  # TODO, add to player.enchantments
         # Changed bait_power from 420 to 200, 0.2 to 0.3
         return 0.4 + (self._effective_level() - location.level * 1.25) / 275 + (fishing_enchant * 0.025) + (
                 self._bait_power() / 200)
@@ -108,7 +107,7 @@ class Fishing(Gathering):
         average_tries = 0
         chance_to_reach_this_attempt = 1
         base_chance = self._node_base_chance(location)
-        fishing_enchant = self.player.enchantments.get('fishing', 0)
+        fishing_enchant = self.get_enchant('fishing')
 
         for nodeFindFailures in range(7):
             chance_this_attempt = min(1, base_chance + fishing_enchant * 0.025 + nodeFindFailures / 6)
@@ -149,7 +148,7 @@ class Fishing(Gathering):
         fishing_level = self.player.fishing_level + self.player.fishing_bonus
         bait_power = self.player.bait_power
         base_chance = self._node_base_chance(location)
-        fishing_enchant = self.player.enchantments.get('fishing', 0)
+        fishing_enchant = self.get_enchant('fishing')
         if self.use_castnet:
             return \
                 self.castnet_average_tries_to_finish_node.predict_single([base_chance, zone_level, min_base, max_base,
@@ -176,7 +175,7 @@ class Fishing(Gathering):
         node_rates = self._node_rates(location)
         node_sizes = self._node_sizes(location)
         node_actions = self._node_actions(location)
-        haste = self.player.enchantments.get('haste', 0)
+        haste = self.get_enchant('haste')
 
         base_time = location.base_duration / 1000 / (1 + haste * 0.04)
         node_search_time = max(1, base_time * 1.75 * (1 - (self._bait_power() / 400)))
@@ -205,7 +204,7 @@ class Fishing(Gathering):
         node_rates = self._node_rates(location)
         node_sizes = self._node_sizes(location)
         node_actions = self._node_actions(location)
-        haste = self.player.enchantments.get('haste', 0)
+        haste = self.get_enchant('haste')
 
         base_time = location.base_duration / 1000 / (1 + haste * 0.04)
         node_search_time = max(1, base_time * 1.75 * (1 - (self._bait_power() / 400)))
@@ -265,12 +264,6 @@ try:
         return np.mean(node_average[(node_resources - min_node_count)])
 
 except ImportError:
-    #from idlescape_cpp import fishing_extern
-    #fish_ext = fishing_extern()
-    #_calculate_node_resources_jit_fishing = fish_ext.calc_resources
-    #_average_tries_to_finish_node_jit_fishing = fish_ext.average_trials
-
-
     def _calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, trials):
         maximum_node_size = np.floor(max_base + (np.random.rand(trials) * (fishing_level - zone_level) / 8) + np.floor(
             np.random.rand(trials) * bait_power / 20))

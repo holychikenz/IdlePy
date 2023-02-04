@@ -18,6 +18,11 @@ class Gathering(ABC):
     def get_maximum_experience(self):
         pass
 
+    @property
+    @abstractmethod
+    def valid_enchants(self):
+        pass
+
     @abstractmethod
     def get_action_primary_attribute(self):
         pass
@@ -29,6 +34,11 @@ class Gathering(ABC):
     @abstractmethod
     def _node_sizes(self, location):
         pass
+
+    def get_enchant(self, name):
+        if name in self.valid_enchants:
+            return self.player.enchantments.get(name, 0)
+        return 0
 
     @abstractmethod
     def _node_actions(self, location):
@@ -68,12 +78,13 @@ class Gathering(ABC):
 
         items = dict()
         total_actions = 0
-        gathering = self.player.enchantments.get("gathering", 0) * 0.10
-        empowered_gathering = self.player.enchantments.get("empoweredGathering", 0) * 0.10
+        gathering = self.get_enchant("gathering") * 0.10
+        empowered_gathering = self.get_enchant("empoweredGathering") * 0.10
         total_gathering = 1 - (1 - gathering) * (1 - empowered_gathering)
-        superheat = self.player.enchantments.get("superheating", 0) * 0.01
-        empowered_superheat = self.player.enchantments.get("empoweredSuperheating", 0) * 0.01
+        superheat = self.get_enchant("superheating") * 0.01
+        empowered_superheat = self.get_enchant("empoweredSuperheating") * 0.01
         total_superheat = 1 - (1 - superheat) * (1 - empowered_superheat)
+        embers = self.get_enchant("embers") * 0.1
         for (name, rate) in node_rates.items():
             avg_size = node_sizes[name]
             total_actions += node_actions[name] * rate
@@ -90,6 +101,9 @@ class Gathering(ABC):
                         items[itemid] = items.get(itemid, 0) - sh_count
                         items[2] = items.get(2, 0) - sh_count * 1.5 \
                                    * self.items[str(sh_id)].get('requiredResources', [{}])[0].get('2', 0)
+                if embers > 0:
+                    new_heat = self.items[str(itemid)].get('heat', 0) * embers * item_node_rate
+                    items[2] = items.get(2, 0) + new_heat
         if gathering > 0:
             items[517] = items.get(517, 0) - gathering * action_rate * 0.15 * total_actions * (1 - empowered_gathering)
         if key == 'name':

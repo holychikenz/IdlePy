@@ -26,7 +26,8 @@ def zone_summary(action, zone):
     item_series.name = 'Count / Hour'
     options = {'rot': 45, 'min_height': 400, 'max_height': 800, 'responsive': True}
     tab_options = {'sortable': True, 'height': 800}
-    the_plot = item_series[item_series.gt(0)].hvplot.bar(**options)
+    skip_items = ['Heat']
+    the_plot = (item_series[item_series.gt(0)]).drop(labels=skip_items, errors='ignore').hvplot.bar(**options)
     the_table = item_series.hvplot.table(columns=['index', 'Count / Hour'], **tab_options)
     return pn.Column(the_plot, the_table)
 

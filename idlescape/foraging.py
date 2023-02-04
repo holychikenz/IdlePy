@@ -7,6 +7,7 @@ from .character import *
 
 class Foraging(Gathering, ABC):
     player = None
+    valid_enchants = ['gathering', 'empoweredGathering', 'haste', 'nature', 'herbalist', 'seedHarvesting', 'embers']
 
     def __init__(self, character, location_data, **kwargs):
         self.player = character
@@ -30,11 +31,11 @@ class Foraging(Gathering, ABC):
             frequency = v.frequency
             # This can be modified based on special enchants
             if "tree" in v.tags:
-                frequency += self.player.enchantments.get("nature", 0)
+                frequency += self.get_enchant("nature")
             if "plants" in v.tags:
-                frequency += self.player.enchantments.get("herbalist", 0)
+                frequency += self.get_enchant("herbalist")
             if "seeds" in v.tags:
-                frequency += self.player.enchantments.get("seedHarvesting", 0)
+                frequency += self.get_enchant("seedHarvesting")
             frequency = min(v.max_frequency, frequency)
             frequency_dict[k] = max(0, frequency)
         total_frequency = sum([v for (k, v) in frequency_dict.items()])
@@ -55,7 +56,7 @@ class Foraging(Gathering, ABC):
             return 0
         if self.alt_experience is not None:
             return self.alt_experience.get(location_name, 0) * self.zone_action_rate(location_name)
-        haste = self.player.enchantments.get('haste', 0)
+        haste = self.get_enchant('haste')
         rate_modifier = (self._effective_level() + 99) / 100 * (1 + haste * 0.04)
         item_hist = self.location_item_histogram(location_name, key='id')
         summed_weighted_xp = 0
@@ -69,7 +70,7 @@ class Foraging(Gathering, ABC):
         location = self.get_location_by_name(location_name)
         if location.level > self.player.foraging_level:
             return 0
-        haste = self.player.enchantments.get('haste', 0)
+        haste = self.get_enchant('haste')
         rate_modifier = (self._effective_level() + 99) / 100 * (1 + haste * 0.04)
         return rate_modifier * 3600000 / location.base_duration
 

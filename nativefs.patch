@@ -1,0 +1,28 @@
+--- docs/zones/ZonePanel.js	2023-02-03 13:52:39.546874866 -0800
++++ ZonePanel.js	2023-02-03 13:56:02.453270997 -0800
+@@ -12,6 +12,18 @@
+   console.log("Loading pyodide!");
+   self.postMessage({type: 'status', msg: 'Loading pyodide'})
+   self.pyodide = await loadPyodide();
++  const dirHandle = await navigator.storage.getDirectory();
++  if ((await dirHandle.queryPermission({ mode: "readwrite" })) !== "granted") {
++    if (
++      (await dirHandle.requestPermission({ mode: "readwrite" })) !== "granted"
++    ) {
++      throw Error("Unable to read and write directory");
++    }
++  }
++
++  let mountDir = "/idlecache";
++  const nativefs = await pyodide.mountNativeFS(mountDir, dirHandle);
++  setInterval( ()=>nativefs.syncfs(), 1000 );
+   self.pyodide.globals.set("sendPatch", sendPatch);
+   console.log("Loaded!");
+   await self.pyodide.loadPackage("micropip");
+@@ -159,4 +171,4 @@
+   }
+ }
+ 
+-startApplication()
+\ No newline at end of file
++startApplication()

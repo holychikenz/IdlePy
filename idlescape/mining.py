@@ -1,10 +1,13 @@
+from abc import ABC
+
 import numpy as np
 from .gathering import *
 from .character import *
 
 
-class Mining(Gathering):
+class Mining(Gathering, ABC):
     player = None
+    valid_enchants = ['gathering', 'empoweredGathering', 'haste', 'superheating', 'empoweredSuperheating']
     sh_table = {
         101: 201,  # Copper
         102: 201,  # Tin
@@ -57,7 +60,7 @@ class Mining(Gathering):
             return 0
         if self.alt_experience is not None:
             return self.alt_experience.get(location_name, 0) * self.zone_action_rate(location_name)
-        haste = self.player.enchantments.get('haste', 0)
+        haste = self.get_enchant('haste')
         rate_modifier = (self._effective_level() + 99) / 100 * (1 + haste * 0.04)
         item_hist = self.location_item_histogram(location_name, key='id')
         summed_weighted_xp = 0
@@ -71,7 +74,7 @@ class Mining(Gathering):
         location = self.get_location_by_name(location_name)
         if location.level > self.player.mining_level:
             return 0
-        haste = self.player.enchantments.get('haste', 0)
+        haste = self.get_enchant('haste')
         rate_modifier = (self._effective_level() + 99) / 100 * (1 + haste * 0.04)
         return rate_modifier * 3600000 / location.base_duration
 
