@@ -14,17 +14,14 @@ class Gathering(ABC):
     def sh_table(self):
         return dict()
 
-    @abstractmethod
-    def get_maximum_experience(self):
-        pass
-
     @property
     @abstractmethod
     def valid_enchants(self):
         pass
 
+    @property
     @abstractmethod
-    def get_action_primary_attribute(self):
+    def primary_attribute(self):
         pass
 
     @abstractmethod
@@ -44,6 +41,18 @@ class Gathering(ABC):
     def _node_actions(self, location):
         pass
 
+    @abstractmethod
+    def zone_action_rate(self, location_name):
+        pass
+
+    def zone_experience_rate(self, name):
+        location = self.get_location_by_name(name)
+        return location.experience * self.zone_action_rate(name)
+
+    def get_maximum_experience(self):
+        zone_xp_list = [self.zone_experience_rate(loc.name) for (k, loc) in self.locations.items()]
+        return max(zone_xp_list)
+
     def _loot_rates(self, node):
         frequency_dict = dict()
         count_dict = dict()
@@ -54,9 +63,6 @@ class Gathering(ABC):
         total_frequency = sum([v for (k, v) in frequency_dict.items()])
         return {k: v / total_frequency * count_dict[k] for (k, v) in frequency_dict.items()}
 
-    @abstractmethod
-    def zone_action_rate(self, location_name):
-        pass
 
     def list_of_actions(self):
         return list(self.locations.keys())
@@ -113,12 +119,13 @@ class Gathering(ABC):
 
 
 class Location:
-    def __init__(self, name, loc_id, action_type, base_duration, level):
+    def __init__(self, name, loc_id, action_type, base_duration, level, experience):
         self.name = name
         self.loc_id = loc_id
         self.action_type = action_type
         self.base_duration = base_duration
         self.level = level
+        self.experience = experience
         self.nodes = dict()
 
     def list_of_nodes(self):
@@ -157,6 +164,14 @@ def find_required_level(df):
         return 0
 
 
+def find_location_xp(df):
+    try:
+        return df["xpPerCompletion"][0]["amount"]
+    except:
+        print(f'Could not find xp in {df["name"]}')
+        return 100
+
+
 def select_action_locations(datafile, item_data, action_type):
     locations = None
     with open(datafile) as j:
@@ -168,7 +183,8 @@ def select_action_locations(datafile, item_data, action_type):
             loc_id = v.get("locID", 0)
             loc_duration = v.get("baseDuration", 0)
             loc_level = find_required_level(v)
-            this_location = Location(loc_name, loc_id, action_type, loc_duration, loc_level)
+            loc_experience = find_location_xp(v)
+            this_location = Location(loc_name, loc_id, action_type, loc_duration, loc_level, loc_experience)
             node_list = v.get("nodes", [{"nodeID": "",
                                          "frequency": 1,
                                          "minimumBaseAmount": 1,

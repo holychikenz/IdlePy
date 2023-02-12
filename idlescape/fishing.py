@@ -9,34 +9,14 @@ class Fishing(Gathering, ABC):
     player = None
     valid_enchants = ['gathering', 'empoweredGathering', 'haste', 'pungentBait', 'deadliestCatch', 'fishingMagnetism',
                       'reinforcedLine', 'fiberFinder', 'fishing']
+    primary_attribute = 'fishing_level'
 
     def __init__(self, character, location_data, **kwargs):
         self.player = character
         self.items = self.player.item_data
         self.locations = select_action_locations(location_data, self.items, "Action-Fishing")
-        self.use_castnet = kwargs.get("castnet", False)
-        self.use_driftwood = kwargs.get("driftwood", False)
         self.accuracy = kwargs.get("accuracy", 10000)
-        if self.use_castnet:
-            from tensorflow import keras
-            from .litemodel import LiteModel
-            tf_castnet_trials = keras.models.load_model('Castnet_Trials')
-            tf_castnet_resources = keras.models.load_model('Castnet_CalcResource')
-            self.castnet_average_tries_to_finish_node = LiteModel.from_keras_model(tf_castnet_trials)
-            self.castnet_calculate_node_resources = LiteModel.from_keras_model(tf_castnet_resources)
-        if self.use_driftwood:
-            import joblib
-            self.driftwood_average_tries_to_finish_node = joblib.load('AvgTrials.pkl')
-            self.driftwood_calculate_node_resources = joblib.load('CalcResources.pkl')
         self.alt_experience = kwargs.get("alt_experience", None)
-        # Fishing gear
-
-    def get_action_primary_attribute(self):
-        return 'fishing_level'
-
-    def get_maximum_experience(self):
-        zone_xp_list = [self.zone_experience_rate(loc.name) for (k, loc) in self.locations.items()]
-        return max(zone_xp_list)
 
     def _effective_level(self):
         set_bonus = 1 + self.player.fishing_set_bonus
@@ -70,14 +50,17 @@ class Fishing(Gathering, ABC):
 
     def _node_rates(self, location):
         frequency_dict = dict()
-        boosted_frequency_dict = dict()
         for (k, v) in location.nodes.items():
             frequency = (v.frequency + self._bonus_rarity()) * (1 + self._effective_level() / 360)
             frequency = min(frequency, v.max_frequency)
 
-            boosted_frequency = max(0, frequency)
             frequency_dict[k] = max(0, frequency)
-            boosted_frequency_dict[k] = boosted_frequency
+        # Fishing magnetism boost
+        positive_average = np.mean([v for (k, v) in frequency_dict.items() if v > 0])
+        boosted_frequency_dict = \
+            {k: (v * (1 + self.get_enchant('fishingMagnetism') * 2 / 50) if v < positive_average else v)
+             for (k, v) in frequency_dict.items()}
+        # Normalize
         total_frequency = sum([v for (k, v) in boosted_frequency_dict.items()])
         return {k: v / total_frequency for (k, v) in boosted_frequency_dict.items()}
 
@@ -124,16 +107,9 @@ class Fishing(Gathering, ABC):
         min_base = node.minimum_base_amount
         max_base = node.maximum_base_amount
         trials = kwargs.get('trials', 1)
-        if self.use_castnet:
-            return self.castnet_calculate_node_resources.predict_single(
-                [zone_level, min_base, max_base, self._effective_level(), self._bait_power()])[0]
-        elif self.use_driftwood:
-            return self.driftwood_calculate_node_resources.predict(
-                [[zone_level, min_base, max_base, self._effective_level(), self._bait_power()]])[0]
-        else:
-            return _calculate_node_resources_jit_fishing(zone_level, min_base, max_base, self._effective_level(),
-                                                         self._bait_power(),
-                                                         trials)
+        return _calculate_node_resources_jit_fishing(zone_level, min_base, max_base, self._effective_level(),
+                                                     self._bait_power(),
+                                                     trials)
 
     def _node_sizes(self, location):
         return {k: self._average_node_size(location, v) for (k, v) in location.nodes.items()}
@@ -149,49 +125,8 @@ class Fishing(Gathering, ABC):
         bait_power = self.player.bait_power
         base_chance = self._node_base_chance(location)
         fishing_enchant = self.get_enchant('fishing')
-        if self.use_castnet:
-            return \
-                self.castnet_average_tries_to_finish_node.predict_single([base_chance, zone_level, min_base, max_base,
-                                                                          fishing_level, bait_power, fishing_enchant])[
-                    0]
-        elif self.use_driftwood:
-            return self.driftwood_average_tries_to_finish_node.predict([[base_chance, zone_level, min_base, max_base,
-                                                                         fishing_level, bait_power, fishing_enchant]])[
-                0]
-        else:
-            return _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level,
-                                                             bait_power, fishing_enchant, self.accuracy)
-
-    def zone_experience_rate(self, location_name):
-        """
-        Experience per hour
-        """
-        location = self.get_location_by_name(location_name)
-        if location.level > self.player.fishing_level:
-            return 0
-        if self.alt_experience is not None:
-            return self.alt_experience.get(location_name, 0) * self.zone_action_rate(location_name)
-
-        node_rates = self._node_rates(location)
-        node_sizes = self._node_sizes(location)
-        node_actions = self._node_actions(location)
-        haste = self.get_enchant('haste')
-
-        base_time = location.base_duration / 1000 / (1 + haste * 0.04)
-        node_search_time = max(1, base_time * 1.75 * (1 - (self._bait_power() / 400)))
-        a_find = self._average_tries_to_find_node(location)
-        loot_search_time = max(1, base_time / 1.25 * (200 / (self._reel_power() + 200)))
-
-        total_experience = 0
-        total_time = 0
-        for (name, rate) in node_rates.items():
-            total_time += (node_search_time * a_find + loot_search_time * node_actions[name]) * rate
-            avg_size = node_sizes[name]
-            loot_rates = self._loot_rates(location.nodes[name])
-            for (itemid, loot) in location.nodes[name].loot.items():
-                item_stats = self.player.item_data[str(itemid)]
-                total_experience += loot_rates[itemid] * avg_size * rate * item_stats.get("experience", 30)
-        return total_experience / total_time * 3600
+        return _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level,
+                                                         bait_power, fishing_enchant, self.accuracy)
 
     def zone_action_rate(self, location_name):
         """
@@ -245,11 +180,14 @@ try:
             total_resources += np.floor(np.random.rand() * delta + small)
         return total_resources / trials
 
+
     @jit
-    def _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level, bait_power,
+    def _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level,
+                                                  bait_power,
                                                   fishing, trials):
         node_resources = np.array(
-            [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1)) for
+            [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1))
+             for
              _ in range(trials)])
         min_node_count = min(node_resources)
         max_node_count = max(node_resources)
@@ -281,10 +219,12 @@ except ImportError:
         return total_resources / trials
 
 
-    def _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level, bait_power,
+    def _average_tries_to_finish_node_jit_fishing(base_chance, zone_level, min_base, max_base, fishing_level,
+                                                  bait_power,
                                                   fishing, trials):
         node_resources = np.array(
-            [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1)) for
+            [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1))
+             for
              _ in range(trials)])
         min_node_count = min(node_resources)
         max_node_count = max(node_resources)
@@ -298,7 +238,7 @@ except ImportError:
         node_average = np.array(node_average)
         return np.mean(node_average[(node_resources - min_node_count)])
 
-#def _calculate_node_resources_slow_fishing(zone_level, min_base, max_base, fishing_level, bait_power, trials):
+# def _calculate_node_resources_slow_fishing(zone_level, min_base, max_base, fishing_level, bait_power, trials):
 #    maximum_node_size = np.floor(max_base + (np.random.rand(trials) * (fishing_level - zone_level) / 8) + np.floor(
 #        np.random.rand(trials) * bait_power / 20))
 #    minimum_node_size = np.floor(min_base + (np.random.rand(trials) * (fishing_level - zone_level) / 6) + np.floor(
@@ -315,7 +255,7 @@ except ImportError:
 #    return total_resources / trials
 #
 #
-#def _average_tries_to_finish_node_slow_fishing(base_chance, zone_level, min_base, max_base, fishing_level, bait_power,
+# def _average_tries_to_finish_node_slow_fishing(base_chance, zone_level, min_base, max_base, fishing_level, bait_power,
 #                                              fishing, trials):
 #    node_resources = np.array(
 #        [int(_calculate_node_resources_jit_fishing(zone_level, min_base, max_base, fishing_level, bait_power, 1)) for

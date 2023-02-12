@@ -148,7 +148,7 @@ class InteractiveCharacter:
     def enchant_widgets(self):
         basic_enchants = ['haste', 'gathering', 'empoweredGathering']
         foraging_enchants = ['nature', 'herbalist', 'seedHarvesting', 'embers']
-        mining_enchants = ['superheating']
+        mining_enchants = ['superheating', 'empoweredSuperheating']
         fishing_enchants = ['fishing', 'pungentBait', 'reinforcedLine', 'fishingMagnetism', 'baitPreservation',
                             'fiberFinder', 'deadliestCatch']
         possible_enchants = basic_enchants + foraging_enchants + mining_enchants + fishing_enchants

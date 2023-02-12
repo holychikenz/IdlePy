@@ -19,7 +19,7 @@ class Sequencer:
     def __init__(self, action, **kwargs):
         self.player = action.player
         self.action = action
-        self.action_type = action.get_action_primary_attribute()
+        self.action_type = action.primary_attribute
         self.sequence_list = kwargs.get('sequence', [])
         self.level_sequencer = []
         self.hour_sequencer = []
