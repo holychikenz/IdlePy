@@ -34,7 +34,10 @@ class Gathering(ABC):
 
     def get_enchant(self, name):
         if name in self.valid_enchants:
-            return self.player.enchantments.get(name, 0)
+            enchantment_level = self.player.enchantments.get(name, 0)
+            # Todo: Enchantment strength read from a json
+            enchantment_strength = 1
+            return enchantment_strength * enchantment_level
         return 0
 
     @abstractmethod
@@ -56,13 +59,45 @@ class Gathering(ABC):
     def _loot_rates(self, node):
         frequency_dict = dict()
         count_dict = dict()
+        # Apply gathering, superheat, embers, etc.
+        gathering = min(1, self.get_enchant("gathering") * 0.10)
+        empowered_gathering = min(1, self.get_enchant("empoweredGathering") * 0.10)
+        total_gathering = 1 - (1 - gathering) * (1 - empowered_gathering)
+        superheat = min(1, self.get_enchant("superheating") * 0.01)
+        empowered_superheat = min(1, self.get_enchant("empoweredSuperheating") * 0.01)
+        total_superheat = 1 - (1 - superheat) * (1 - empowered_superheat)
+        embers = self.get_enchant("embers") * 0.1
+        # Calculate frequency
         for (idd, loot) in node.loot.items():
-            frequency = np.min([loot.frequency, loot.max_frequency])
-            frequency_dict[idd] = max(0, frequency)
-            count_dict[idd] = (loot.min_amount + loot.max_amount) / 2
+            frequency = self._get_relative_frequency(loot)
+            frequency_dict[idd] = frequency_dict.get(idd, 0) + frequency
+            # Todo Put in SH and Embers
         total_frequency = sum([v for (k, v) in frequency_dict.items()])
-        return {k: v / total_frequency * count_dict[k] for (k, v) in frequency_dict.items()}
+        frequency_dict = {k: v / total_frequency for (k, v) in frequency_dict.items()}
+        # Collect items
+        for (idd, loot) in node.loot.items():
+            frequency = frequency_dict.get(idd, 0)
+            new_base_items = ((loot.min_amount + loot.max_amount) / 2 + total_gathering - total_superheat) * frequency
+            count_dict[idd] = count_dict.get(idd, 0) + new_base_items
+            if total_superheat > 0:
+                if idd in self.sh_table:
+                    sh_id = self.sh_table[idd]
+                    sh_count = total_superheat * frequency
+                    count_dict[sh_id] = count_dict.get(sh_id, 0) + sh_count
+                    lost_heat = sh_count * 1.5 * self.items[str(sh_id)].get('requiredResources', [{}])[0].get('2', 0)
+                    count_dict[2] = count_dict.get(2, 0) - lost_heat
+                    lost_fire = frequency * superheat * (1 - empowered_superheat)
+                    count_dict[512] = count_dict.get(512, 0) - lost_fire
+            if embers > 0:
+                new_heat = self.items[str(idd)].get('heat', 0) * embers * frequency
+                count_dict[2] = count_dict.get(2, 0) + new_heat
+            if gathering > 0:
+                lost_nature = frequency * gathering * 0.15 * (1 - empowered_gathering)
+                count_dict[517] = count_dict.get(517, 0) - lost_nature
+        return count_dict
 
+    def _get_relative_frequency(self, loot):
+        return max(0, np.min([loot.frequency, loot.max_frequency]))
 
     def list_of_actions(self):
         return list(self.locations.keys())
@@ -84,34 +119,13 @@ class Gathering(ABC):
 
         items = dict()
         total_actions = 0
-        gathering = self.get_enchant("gathering") * 0.10
-        empowered_gathering = self.get_enchant("empoweredGathering") * 0.10
-        total_gathering = 1 - (1 - gathering) * (1 - empowered_gathering)
-        superheat = self.get_enchant("superheating") * 0.01
-        empowered_superheat = self.get_enchant("empoweredSuperheating") * 0.01
-        total_superheat = 1 - (1 - superheat) * (1 - empowered_superheat)
-        embers = self.get_enchant("embers") * 0.1
         for (name, rate) in node_rates.items():
             avg_size = node_sizes[name]
             total_actions += node_actions[name] * rate
             loot_rates = self._loot_rates(location.nodes[name])
-            for (itemid, loot) in location.nodes[name].loot.items():
-                item_node_rate = loot_rates[itemid] * avg_size * rate * action_rate
-                base_rate = items.get(itemid, 0) + item_node_rate * (1 + total_gathering)
-                items[itemid] = base_rate
-                if total_superheat > 0:
-                    if itemid in self.sh_table:
-                        sh_id = self.sh_table[itemid]
-                        sh_count = item_node_rate * total_superheat
-                        items[sh_id] = items.get(sh_id, 0) + sh_count
-                        items[itemid] = items.get(itemid, 0) - sh_count
-                        items[2] = items.get(2, 0) - sh_count * 1.5 \
-                                   * self.items[str(sh_id)].get('requiredResources', [{}])[0].get('2', 0)
-                if embers > 0:
-                    new_heat = self.items[str(itemid)].get('heat', 0) * embers * item_node_rate
-                    items[2] = items.get(2, 0) + new_heat
-        if gathering > 0:
-            items[517] = items.get(517, 0) - gathering * action_rate * 0.15 * total_actions * (1 - empowered_gathering)
+            for (itemid, count) in loot_rates.items():
+                item_node_rate = count * avg_size * rate * action_rate
+                items[itemid] = items.get(itemid, 0) + item_node_rate
         if key == 'name':
             return pd.Series({self.items[str(k)]['name']: v / total_actions for (k, v) in items.items()})
         else:

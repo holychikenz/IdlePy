@@ -64,24 +64,15 @@ class Fishing(Gathering, ABC):
         total_frequency = sum([v for (k, v) in boosted_frequency_dict.items()])
         return {k: v / total_frequency for (k, v) in boosted_frequency_dict.items()}
 
-    def _loot_rates(self, node, **kwargs):
-        frequency_dict = dict()
-        boosted_frequency_dict = dict()
-        single_drop = kwargs.get('single', False)
-        for (idd, loot) in node.loot.items():
-            frequency = (loot.frequency + self._bonus_rarity()) * (1 + self._effective_level() / 360)
-            frequency = min(frequency, loot.max_frequency)
-            if loot.item_class == "fiber":
-                frequency = frequency * (1 + self.get_enchant('fiberFinder') * 0.25)
-            boosted_frequency = max(0, frequency)
-            frequency_dict[idd] = max(0, frequency)
-            boosted_frequency_dict[idd] = boosted_frequency
-
-        total_frequency = sum([v for (k, v) in boosted_frequency_dict.items()])
-        return {k: v / total_frequency for (k, v) in boosted_frequency_dict.items()}
+    def _get_relative_frequency(self, loot):
+        frequency = (loot.frequency + self._bonus_rarity()) * (1 + self._effective_level() / 360)
+        frequency = min(frequency, loot.max_frequency)
+        if loot.item_class == "fiber":
+            frequency = frequency * (1 + self.get_enchant('fiberFinder') * 0.25)
+        return max(0, frequency)
 
     def _node_base_chance(self, location):
-        fishing_enchant = self.get_enchant("fishing")  # TODO, add to player.enchantments
+        fishing_enchant = self.get_enchant("fishing")
         # Changed bait_power from 420 to 200, 0.2 to 0.3
         return 0.4 + (self._effective_level() - location.level * 1.25) / 275 + (fishing_enchant * 0.025) + (
                 self._bait_power() / 200)

@@ -39,6 +39,10 @@ class Smithing:
 
         bar_tier = max(1, round(bar_level / (13.5 + metallurgy)))
         effective_intensity = intensity - bar_tier
+        if effective_intensity < 0:
+            return None
+        if intensity > active_forge_data['forgeMaxIntensity']:
+            return None
         power_mult = 360 / (360 + 2.5 * mastery + total_level - 1)
         total_time = bar_time * forge_speed_mult * forge_intensity_mult ** effective_intensity * \
             power_mult / haste / 1000

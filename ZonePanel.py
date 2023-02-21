@@ -10,7 +10,6 @@ action_selector = pn.widgets.Select(name='Action', options={'Mining': pc.mining,
                                                             'Fishing': pc.fishing})
 zone_selector = pn.widgets.Select(options=action_selector.value.list_of_actions())
 
-
 @pn.depends(action_selector.param.value, watch=True)
 def _update_zone(action):
     locations = action.list_of_actions()
@@ -28,26 +27,32 @@ def zone_summary(action, zone):
     the_plot = (item_series[item_series.gt(0)]).drop(labels=skip_items, errors='ignore').hvplot.bar(**options)
     tab_options = {'sortable': True, 'height': (len(item_series) + 1) * height_per_row}
     the_table = item_series.hvplot.table(columns=['index', 'Count / Hour'], **tab_options)
-    # New rows: crafting, cooking
+    # New rows: crafting, cooking, combustible
     craft_xp = {"Log": 5, "Oak Log": 10, "Willow Log": 15, "Maple Log": 30, "Yew Log": 45, "Elder Log": 100,
                 "Raw Tentacle Meat": 150, "Rotten Driftwood": 5, "Sturdy Driftwood": 10,
                 "Aqueous Grass": 1, "Water Weeds": 3, "River Vines": 8.7, "Violet Ribbons": 16.45, "White Reeds": 37.6,
                 "Ancient Kelp": 61.5,
                 "Adamantite Ore": 5.3, "Adamantite Bar": 40, "Runite Ore": 6.36, "Runite Bar": 70,
                 "Stygian Ore": 8, "Stygian Bar": 150, "Copper Ore": 1}
+    alt_heat = {"Fish Oil": 240}
     for (k, v) in pc.player.item_data.items():
         if "fish" in v.get("tags", []):
             crafting_xp = 48 * v.get("size", 0) / 20
             craft_xp[v["name"]] = crafting_xp
+            alt_heat[v["name"]] = v.get("size", 0) / 20 * 240
 
     total_craft_xp = np.sum([item_series.get(k, 0) * v for (k, v) in craft_xp.items()])
     total_cooking_xp = 0
+    total_combustible = 0
     for (k, v) in item_series.items():
         this_item = pc.player.get_item_by_name(k)
-        experience = 5 * (this_item.get('difficulty', 0) + this_item.get('bonusDifficultyXP', 0)) * v
-        total_cooking_xp += experience
+        total_cooking_xp += 5 * (this_item.get('difficulty', 0) + this_item.get('bonusDifficultyXP', 0)) * v
+        total_combustible += (this_item.get('heat', 0) + alt_heat.get(k, 0)) * v
     total_zone_experience = action.zone_experience_rate(zone)
-    second_df = pd.Series({'Experience': total_zone_experience, 'Crafting': total_craft_xp, 'Cooking': total_cooking_xp})
+    second_df = pd.Series({'Experience': total_zone_experience,
+                           'Crafting': total_craft_xp,
+                           'Cooking': total_cooking_xp,
+                           'Combustible': total_combustible})
     second_df = second_df[second_df.gt(0)].round(0)
     second_df.name = 'Count / Hour'
     second_table = second_df.hvplot.table(columns=['index', 'Count / Hour'], height=(len(second_df) + 1) * height_per_row)

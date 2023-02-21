@@ -154,7 +154,7 @@ class InteractiveCharacter:
         possible_enchants = basic_enchants + foraging_enchants + mining_enchants + fishing_enchants
         self.enchant_widget_list = [
             WidgetAttachment(self.player.enchantments, iter_val,
-                             pn.widgets.IntInput(name=iter_val.capitalize(), start=0, end=8, step=1))
+                             pn.widgets.IntInput(name=iter_val.capitalize(), start=0, end=16, step=1))
             for iter_val in possible_enchants
         ]
         for widget_ptr in self.enchant_widget_list:

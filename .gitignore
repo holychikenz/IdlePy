@@ -1,8 +1,4 @@
-*.bundle.*
-lib/
-node_modules/
-.yarn-packages/
-*.egg-info/
+jjj*.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
 emsdk/
@@ -38,6 +34,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.idea/
+*.egg-info/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -115,3 +113,6 @@ dmypy.json
 # jupyterlite
 *.doit.db
 _output
+
+# Patch leftovers
+*.orig
