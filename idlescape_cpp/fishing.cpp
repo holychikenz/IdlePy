@@ -39,7 +39,7 @@ double calc_resources(int zone_level, int min_base, int max_base, double fishing
 
         double delta = abs(min_node - max_node);
         double small = std::min(min_node, max_node);
-        total_resources += floor(randy()*delta + small);
+        total_resources += floor(randy()*(delta + 1) + small);
     }
     return total_resources / trials;
 }
