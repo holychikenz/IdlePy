@@ -18,9 +18,9 @@ class BalanceEditor:
         self.json_editor = pn.widgets.JSONEditor(value=loc_data, mode='tree', width_policy='max', height=1000)
 
         def json_callback(event):
-            self.character.mining.set_location_data(event.new)
-            self.character.foraging.set_location_data(event.new)
-            self.character.fishing.set_location_data(event.new)
+            self.character.mining.set_location_data(self.json_editor.value)
+            self.character.foraging.set_location_data(self.json_editor.value)
+            self.character.fishing.set_location_data(self.json_editor.value)
             if additional_callback is not None:
                 additional_callback(event)
 
