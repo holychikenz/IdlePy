@@ -24,6 +24,11 @@ class Gathering(ABC):
     def primary_attribute(self):
         pass
 
+    @property
+    @abstractmethod
+    def action_name(self):
+        pass
+
     @abstractmethod
     def _node_rates(self, location):
         pass
@@ -131,6 +136,51 @@ class Gathering(ABC):
         else:
             return pd.Series({k: v / total_actions for (k, v) in items.items()})
 
+    def set_location_data(self, new_data):
+        self.locations = self._select_action_locations(new_data)
+
+    def _select_action_locations(self, input_data):
+        locations = None
+        if isinstance(input_data, str):
+            with open(input_data) as j:
+                locations = json.load(j)
+        else:
+            locations = input_data
+        results = dict()
+        for (k, v) in locations.items():
+            if v['actionType'] == self.action_name:
+                loc_name = v.get("name", "")
+                loc_id = v.get("locID", 0)
+                loc_duration = v.get("baseDuration", 0)
+                loc_level = find_required_level(v)
+                loc_experience = find_location_xp(v)
+                this_location = Location(loc_name, loc_id, self.action_name, loc_duration, loc_level, loc_experience)
+                node_list = v.get("nodes", [{"nodeID": "",
+                                             "frequency": 1,
+                                             "minimumBaseAmount": 1,
+                                             "loot": v.get("loot", [])}])
+                for node in node_list:
+                    node_id = node.get("nodeID", "")
+                    node_frequency = node.get("frequency", 1)
+                    node_max_freq = node.get("maxFrequency", node_frequency)
+                    node_min_base = node.get("minimumBaseAmount", 1)
+                    node_max_base = node.get("maximumBaseAmount", node_min_base)
+                    node_tags = node.get("tags", [])
+                    this_node = Node(node_id, node_frequency, node_max_freq, node_min_base, node_max_base, node_tags)
+                    for loot in node["loot"]:
+                        loot_id = loot.get("id", 0)
+                        loot_freq = loot.get("frequency", 1)
+                        loot_max_freq = loot.get("maxFrequency", loot_freq)
+                        loot_min_amount = loot.get("minAmount", 1)
+                        loot_max_amount = loot.get("maxAmount", loot_min_amount)
+                        item_class = self.items[str(loot_id)].get("class", "")
+                        this_loot = NodeLoot(loot_id, loot_freq, loot_max_freq, loot_min_amount, loot_max_amount,
+                                             item_class)
+                        this_node.loot[loot["id"]] = this_loot
+                    this_location.nodes[node["nodeID"]] = this_node
+                results[v['name']] = this_location
+        return results
+
 
 class Location:
     def __init__(self, name, loc_id, action_type, base_duration, level, experience):
@@ -186,41 +236,3 @@ def find_location_xp(df):
         return 100
 
 
-def select_action_locations(datafile, item_data, action_type):
-    locations = None
-    with open(datafile) as j:
-        locations = json.load(j)
-    results = dict()
-    for (k, v) in locations.items():
-        if v['actionType'] == action_type:
-            loc_name = v.get("name", "")
-            loc_id = v.get("locID", 0)
-            loc_duration = v.get("baseDuration", 0)
-            loc_level = find_required_level(v)
-            loc_experience = find_location_xp(v)
-            this_location = Location(loc_name, loc_id, action_type, loc_duration, loc_level, loc_experience)
-            node_list = v.get("nodes", [{"nodeID": "",
-                                         "frequency": 1,
-                                         "minimumBaseAmount": 1,
-                                         "loot": v.get("loot", [])}])
-            for node in node_list:
-                node_id = node.get("nodeID", "")
-                node_frequency = node.get("frequency", 1)
-                node_max_freq = node.get("maxFrequency", node_frequency)
-                node_min_base = node.get("minimumBaseAmount", 1)
-                node_max_base = node.get("maximumBaseAmount", node_min_base)
-                node_tags = node.get("tags", [])
-                this_node = Node(node_id, node_frequency, node_max_freq, node_min_base, node_max_base, node_tags)
-                for loot in node["loot"]:
-                    loot_id = loot.get("id", 0)
-                    loot_freq = loot.get("frequency", 1)
-                    loot_max_freq = loot.get("maxFrequency", loot_freq)
-                    loot_min_amount = loot.get("minAmount", 1)
-                    loot_max_amount = loot.get("maxAmount", loot_min_amount)
-                    item_class = item_data[str(loot_id)].get("class", "")
-                    this_loot = NodeLoot(loot_id, loot_freq, loot_max_freq, loot_min_amount, loot_max_amount,
-                                         item_class)
-                    this_node.loot[loot["id"]] = this_loot
-                this_location.nodes[node["nodeID"]] = this_node
-            results[v['name']] = this_location
-    return results

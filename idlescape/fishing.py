@@ -10,11 +10,12 @@ class Fishing(Gathering, ABC):
     valid_enchants = ['gathering', 'empoweredGathering', 'haste', 'pungentBait', 'deadliestCatch', 'fishingMagnetism',
                       'reinforcedLine', 'fiberFinder', 'fishing']
     primary_attribute = 'fishing_level'
+    action_name = "Action-Fishing"
 
     def __init__(self, character, location_data, **kwargs):
         self.player = character
         self.items = self.player.item_data
-        self.locations = select_action_locations(location_data, self.items, "Action-Fishing")
+        self.locations = self._select_action_locations(location_data)
         self.accuracy = kwargs.get("accuracy", 10000)
         self.alt_experience = kwargs.get("alt_experience", None)
 
@@ -28,8 +29,8 @@ class Fishing(Gathering, ABC):
     def _bait_power(self):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.bait_power
-        gear_enchant = self.get_enchant('pungentBait') * 3 \
-                       - self.get_enchant('fishingMagnetism') * 2
+        gear_enchant = (self.get_enchant('pungentBait') * 3
+                        - self.get_enchant('fishingMagnetism') * 2)
         bait = self.player.bait_bait_power * (1 + self.get_enchant('deadliestCatch') * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 
@@ -43,8 +44,8 @@ class Fishing(Gathering, ABC):
     def _reel_power(self):
         set_bonus = 1 + self.player.fishing_set_bonus
         gear_base = self.player.reel_power
-        gear_enchant = self.get_enchant('reinforcedLine') * 3 \
-                       - self.get_enchant('fishingMagnetism') * 2
+        gear_enchant = (self.get_enchant('reinforcedLine') * 3
+                        - self.get_enchant('fishingMagnetism') * 2)
         bait = self.player.bait_reel_power * (1 + self.get_enchant('deadliestCatch') * 0.05)
         return (gear_base + gear_enchant) * set_bonus + bait
 

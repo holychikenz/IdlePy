@@ -9,6 +9,7 @@ class Mining(Gathering, ABC):
     player = None
     valid_enchants = ['gathering', 'empoweredGathering', 'haste', 'superheating', 'empoweredSuperheating']
     primary_attribute = 'mining_level'
+    action_name = "Action-Mining"
     sh_table = {
         101: 201,  # Copper
         102: 201,  # Tin
@@ -25,7 +26,7 @@ class Mining(Gathering, ABC):
     def __init__(self, character, location_data, **kwargs):
         self.player = character
         self.items = self.player.item_data
-        self.locations = select_action_locations(location_data, self.items, "Action-Mining")
+        self.locations = self._select_action_locations(location_data)
         self.alt_experience = kwargs.get("alt_experience", None)
 
     def _effective_level(self):

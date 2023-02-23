@@ -9,11 +9,12 @@ class Foraging(Gathering, ABC):
     player = None
     valid_enchants = ['gathering', 'empoweredGathering', 'haste', 'nature', 'herbalist', 'seedHarvesting', 'embers']
     primary_attribute = 'foraging_level'
+    action_name = "Action-Foraging"
 
     def __init__(self, character, location_data, **kwargs):
         self.player = character
         self.items = self.player.item_data
-        self.locations = select_action_locations(location_data, self.items, "Action-Foraging")
+        self.locations = self._select_action_locations(location_data)
         self.alt_experience = kwargs.get("alt_experience", None)
 
     def _effective_level(self):

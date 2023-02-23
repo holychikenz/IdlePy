@@ -13,8 +13,8 @@ class InteractiveCharacter:
     LOCAL_CACHE_FILE = "cache.json"
 
     def __init__(self, **kwargs):
-        item_file = kwargs.get("item_file", str(ires.path('idlescape', 'data')) + "/items.json")
-        location_file = kwargs.get("location_file", str(ires.path('idlescape', 'data')) + "/locations.json")
+        self.item_file = kwargs.get("item_file", str(ires.path('idlescape', 'data')) + "/items.json")
+        self.location_file = kwargs.get("location_file", str(ires.path('idlescape', 'data')) + "/locations.json")
         self.level_widget_list = None
         self.equipment_widget_list = None
         self.enchant_widget_list = None
@@ -23,10 +23,10 @@ class InteractiveCharacter:
         # Player Stats and Levels
         self.read_cache()
         self.player_stats = self.cached_stats.get("player_stats", {})
-        self.player = Character(datafile=item_file, **self.player_stats)
-        self.mining = Mining(self.player, location_file)
-        self.foraging = Foraging(self.player, location_file)
-        self.fishing = Fishing(self.player, location_file, accuracy=1000)
+        self.player = Character(datafile=self.item_file, **self.player_stats)
+        self.mining = Mining(self.player, self.location_file)
+        self.foraging = Foraging(self.player, self.location_file)
+        self.fishing = Fishing(self.player, self.location_file, accuracy=1000)
         # Player equipment sets (one for each action)
         self.player_mining_equipment = self.cached_stats.get("mining_equipment", {})
         self.player_foraging_equipment = self.cached_stats.get("foraging_equipment", {})
