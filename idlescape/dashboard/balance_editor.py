@@ -15,12 +15,16 @@ class BalanceEditor:
         with open(self.character.location_file) as j:
             loc_data = json.load(j)
 
-        self.json_editor = pn.widgets.JSONEditor(value=loc_data, mode='tree', width_policy='max', height=1000)
+        # Hack to avoid json string '
+        string_data = json.loads(json.dumps(loc_data).replace("'", "^^"))
+        self.json_editor = pn.widgets.JSONEditor(value=string_data, mode='tree', width_policy='max', height=1000)
 
         def json_callback(event):
-            self.character.mining.set_location_data(dict(self.json_editor.value))
-            self.character.foraging.set_location_data(dict(self.json_editor.value))
-            self.character.fishing.set_location_data(dict(self.json_editor.value))
+            # Unhack the string
+            unstring_data = json.loads(json.dumps(self.json_editor.value).replace("^^", "'"))
+            self.character.mining.set_location_data(unstring_data)
+            self.character.foraging.set_location_data(unstring_data)
+            self.character.fishing.set_location_data(unstring_data)
             if additional_callback is not None:
                 additional_callback(event)
 
