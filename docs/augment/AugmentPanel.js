@@ -71,7 +71,7 @@ level_scaling = pn.widgets.EditableFloatSlider(name='level_scaling', start=0.0, 
 level_scaling.value = 1.33
 level_norm = pn.widgets.EditableFloatSlider(name='level_norm', start=100, end=300, step=1)
 level_norm.value = 200
-level_weight = pn.widgets.EditableFloatSlider(name='level_weight', start=0.1, end=10, step=0.1)
+level_weight = pn.widgets.EditableFloatSlider(name='level_weight', start=0.01, end=2.0, step=0.01)
 level_weight.value = 1.0
 tool_bonus = pn.widgets.EditableFloatSlider(name='tool_bonus', start=0, end=100, step=1)
 tool_bonus.value = 50
@@ -86,7 +86,7 @@ info_string = """
 # Base Formulas
 
 \`\`\`
-P(target) = (base_probability + sqrt(character_level * level_scaling) / level_norm)^(target / level_weight) + old_chances
+P(target) = (base_probability + sqrt(character_level * level_scaling) / level_norm)^(target ^ level_weight) + old_chances
 \`\`\`
 
 \`\`\`
