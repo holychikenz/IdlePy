@@ -81,12 +81,14 @@ exp_tier_power = pn.widgets.EditableFloatSlider(name='exp_tier_power', start=1, 
 exp_tier_power.value = 2.5
 exp_level_power = pn.widgets.EditableFloatSlider(name='exp_level_power', start=1, end=4, step=0.01)
 exp_level_power.value = 1.25
+old_chances = pn.widgets.EditableFloatSlider(name='chances', start=0.0, end=0.20, step=0.01)
+old_chances.value = 0.0
 
 info_string = """
 # Base Formulas
 
 \`\`\`
-P(target) = (base_probability + sqrt(character_level * level_scaling) / level_norm)^(target ^ level_weight) + old_chances
+P(target) = (base_probability + sqrt(character_level * level_scaling) / level_norm)^(target ^ level_weight) + chances
 \`\`\`
 
 \`\`\`
@@ -98,7 +100,7 @@ info_panel = pn.pane.Markdown(info_string)
 
 # The plots
 def summary_plots(test_level_value, base_probability_value, level_scaling_value, level_norm_value,
-                  level_weight_value, tool_bonus_value, exp_scale_value, exp_tier_power_value, exp_level_power_value):
+                  level_weight_value, tool_bonus_value, exp_scale_value, exp_tier_power_value, exp_level_power_value, old_chances_value):
     new_aug.base_probability = base_probability_value
     new_aug.level_scaling = level_scaling_value
     new_aug.level_norm = level_norm_value
@@ -107,6 +109,7 @@ def summary_plots(test_level_value, base_probability_value, level_scaling_value,
     new_aug.exp_scale = exp_scale_value
     new_aug.exp_tier_power = exp_tier_power_value
     new_aug.exp_level_power = exp_level_power_value
+    new_aug.old_chances = old_chances_value
     # Test level as parameter?
     # Plot of success chance
     fig0, ax0 = plt.subplots()
@@ -169,9 +172,9 @@ def summary_plots(test_level_value, base_probability_value, level_scaling_value,
 
 
 interactive_plot = pn.bind(summary_plots, test_level, base_probability, level_scaling, level_norm, level_weight,
-                           tool_bonus, exp_scale, exp_tier_power, exp_level_power)
+                           tool_bonus, exp_scale, exp_tier_power, exp_level_power, old_chances)
 selection_column = pn.Column(test_level, base_probability, level_scaling, level_norm, level_weight, tool_bonus,
-                             exp_scale, exp_tier_power, exp_level_power)
+                             exp_scale, exp_tier_power, exp_level_power, old_chances)
 
 template = pn.template.FastListTemplate(
     title='Idlescape Augmenting',
