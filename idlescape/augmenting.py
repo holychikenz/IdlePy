@@ -16,6 +16,7 @@ class Augmenting:
     exp_level_power = 1.5
     old_chances = 0.06
     tool_bonus = 0
+    level_weight = 1.0
 
     def __init__(self):
         pass
@@ -23,7 +24,7 @@ class Augmenting:
     def single_probability(self, item_level, character_level):
         character_level = character_level + self.tool_bonus
         return (self.base_probability + np.sqrt(character_level * self.level_scaling)
-                / self.level_norm) ** item_level + self.old_chances
+                / self.level_norm) ** (item_level / self.level_weight) + self.old_chances
 
     def experience_formula(self, item_tier, target_level):
         return self.exp_scale * item_tier**self.exp_tier_power * target_level**self.exp_level_power

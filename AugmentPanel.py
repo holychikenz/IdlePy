@@ -20,6 +20,8 @@ level_scaling = pn.widgets.EditableFloatSlider(name='level_scaling', start=0.0, 
 level_scaling.value = 1.33
 level_norm = pn.widgets.EditableFloatSlider(name='level_norm', start=100, end=300, step=1)
 level_norm.value = 200
+level_weight = pn.widgets.EditableFloatSlider(name='level_weight', start=0.1, end=10, step=0.1)
+level_weight.value = 1.0
 tool_bonus = pn.widgets.EditableFloatSlider(name='tool_bonus', start=0, end=100, step=1)
 tool_bonus.value = 50
 exp_scale = pn.widgets.EditableFloatSlider(name='exp_scale', start=1, end=100, step=1)
@@ -33,7 +35,7 @@ info_string = """
 # Base Formulas
 
 ```
-P(target) = (base_probability + sqrt(character_level * level_scaling) / level_norm)^target + old_chances
+P(target) = (base_probability + sqrt(character_level * level_scaling) / level_norm)^(target / level_weight) + old_chances
 ```
 
 ```
@@ -43,11 +45,12 @@ experience(tier, target) = exp_scale * tier^exp_tier_power * target^exp_level_po
 info_panel = pn.pane.Markdown(info_string)
 
 # The plots
-def summary_plots(base_probability_value, level_scaling_value, level_norm_value, tool_bonus_value,
+def summary_plots(base_probability_value, level_scaling_value, level_norm_value, level_weight_value, tool_bonus_value,
                   exp_scale_value, exp_tier_power_value, exp_level_power_value):
     new_aug.base_probability = base_probability_value
     new_aug.level_scaling = level_scaling_value
     new_aug.level_norm = level_norm_value
+    new_aug.level_weight = level_weight_value
     new_aug.tool_bonus = tool_bonus_value
     new_aug.exp_scale = exp_scale_value
     new_aug.exp_tier_power = exp_tier_power_value
@@ -110,9 +113,9 @@ def summary_plots(base_probability_value, level_scaling_value, level_norm_value,
     return return_column
 
 
-interactive_plot = pn.bind(summary_plots, base_probability, level_scaling, level_norm, tool_bonus,
+interactive_plot = pn.bind(summary_plots, base_probability, level_scaling, level_norm, level_weight, tool_bonus,
                            exp_scale, exp_tier_power, exp_level_power)
-selection_column = pn.Column(base_probability, level_scaling, level_norm, tool_bonus,
+selection_column = pn.Column(base_probability, level_scaling, level_norm, level_weight, tool_bonus,
                              exp_scale, exp_tier_power, exp_level_power)
 
 template = pn.template.FastListTemplate(
