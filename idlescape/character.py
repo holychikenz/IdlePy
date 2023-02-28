@@ -30,6 +30,8 @@ class Character:
         self.foraging_level = kwargs.get("foraging_level", 1)
         self.foraging_bonus = kwargs.get("foraging_bonus", 0)
         self.foraging_set_bonus = kwargs.get("foraging_set_bonus", 0.0)
+        # Enchanting
+        self.enchanting_level = kwargs.get("enchanting_level", 1)
         # Smithing
         self.smithing_level = kwargs.get("smithing_level", 1)
         self.smithing_mastery = kwargs.get("smithing_mastery", 0)
@@ -124,7 +126,6 @@ class Character:
             self.fishing_set_bonus = 0.2
         if fishing_set_count == 4:
             self.fishing_set_bonus = 0.4
-
 
     def get_item_by_name(self, name):
         index = self.item_lookup_table.get(name, None)

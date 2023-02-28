@@ -26,17 +26,17 @@ class ActionSummary:
         fishing_craft_xp = {"Raw Tentacle Meat": 150, "Rotten Driftwood": 5, "Sturdy Driftwood": 10,
                             "Aqueous Grass": 1, "Water Weeds": 3, "River Vines": 8.7, "Violet Ribbons": 16.45,
                             "White Reeds": 37.6, "Ancient Kelp": 61.5}
-        mining_craft_xp = {"Bronze Bar": 1, "Iron Bar": 1, "Gold Bar": 1, "Mithril Bar": 1, "Adamantite Bar": 1,
-                           "Runite Bar": 1, "Stygian Bar": 1}
+        mining_craft_xp = {"Bronze Bar": 5, "Iron Bar": 10, "Gold Bar": 12, "Mithril Bar": 20, "Adamantite Bar": 40,
+                           "Runite Bar": 70, "Stygian Bar": 150}
         ore_xp = {
-            "Copper Ore": mining_craft_xp["Bronze Bar"],
-            "Tin Ore": mining_craft_xp["Bronze Bar"],
-            "Iron Ore": mining_craft_xp["Iron Bar"],
-            "Gold Ore": mining_craft_xp["Gold Bar"],
-            "Mithril Ore": mining_craft_xp["Mithril Bar"],
-            "Adamantite Ore": mining_craft_xp["Adamantite Bar"],
-            "Runite Ore": mining_craft_xp["Runite Bar"],
-            "Stygian Ore": mining_craft_xp["Stygian Bar"],
+            "Copper Ore": mining_craft_xp["Bronze Bar"]/2,
+            "Tin Ore": mining_craft_xp["Bronze Bar"]/2,
+            "Iron Ore": mining_craft_xp["Iron Bar"] * 2/5,
+            "Gold Ore": mining_craft_xp["Gold Bar"] * 2/15,
+            "Mithril Ore": mining_craft_xp["Mithril Bar"] * 2/8,
+            "Adamantite Ore": mining_craft_xp["Adamantite Bar"] * 2/15,
+            "Runite Ore": mining_craft_xp["Runite Bar"] * 2/23,
+            "Stygian Ore": mining_craft_xp["Stygian Bar"] * 2/38,
         }
         self.craft_xp = foraging_craft_xp | fishing_craft_xp | mining_craft_xp | ore_xp
         for (k, v) in self.character.player.item_data.items():

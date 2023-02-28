@@ -3,3 +3,6 @@ panel
 pandas
 numpy
 numba
+matplotlib
+scipy
+nlopt
