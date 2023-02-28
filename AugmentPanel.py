@@ -14,6 +14,8 @@ new_aug = Augmenting()
 new_aug.old_chances = 0
 
 # Simple selectors
+test_level = pn.widgets.EditableFloatSlider(name='test_level', start=1, end=200, step=1)
+test_level.value = 160
 base_probability = pn.widgets.EditableFloatSlider(name='base_probability', start=0.5, end=1.0, step=0.01)
 base_probability.value = 0.9
 level_scaling = pn.widgets.EditableFloatSlider(name='level_scaling', start=0.0, end=3.0, step=0.01)
@@ -44,9 +46,10 @@ experience(tier, target) = exp_scale * tier^exp_tier_power * target^exp_level_po
 """
 info_panel = pn.pane.Markdown(info_string)
 
+
 # The plots
-def summary_plots(base_probability_value, level_scaling_value, level_norm_value, level_weight_value, tool_bonus_value,
-                  exp_scale_value, exp_tier_power_value, exp_level_power_value):
+def summary_plots(test_level_value, base_probability_value, level_scaling_value, level_norm_value,
+                  level_weight_value, tool_bonus_value, exp_scale_value, exp_tier_power_value, exp_level_power_value):
     new_aug.base_probability = base_probability_value
     new_aug.level_scaling = level_scaling_value
     new_aug.level_norm = level_norm_value
@@ -55,10 +58,13 @@ def summary_plots(base_probability_value, level_scaling_value, level_norm_value,
     new_aug.exp_scale = exp_scale_value
     new_aug.exp_tier_power = exp_tier_power_value
     new_aug.exp_level_power = exp_level_power_value
+    # Test level as parameter?
     # Plot of success chance
     fig0, ax0 = plt.subplots()
-    ax0.step(old_aug.x_values, old_aug.probability_distribution(160)[0], label="Old: 160")
-    ax0.step(new_aug.x_values, new_aug.probability_distribution(160)[0], label=f"New: 160(+{new_aug.tool_bonus})")
+    ax0.step(old_aug.x_values, old_aug.probability_distribution(test_level_value)[0],
+             label=f"Old: {test_level_value}")
+    ax0.step(new_aug.x_values, new_aug.probability_distribution(test_level_value)[0],
+             label=f"New: {test_level_value}(+{new_aug.tool_bonus})")
     ax0.legend()
     ax0.set_ylim(bottom=0)
     ax0.set_xlim(0, 30)
@@ -91,10 +97,10 @@ def summary_plots(base_probability_value, level_scaling_value, level_norm_value,
     mpl_pane_2 = pn.pane.Matplotlib(fig2, height=400)
     # Cost
     fig3, ax3 = plt.subplots(1, 2, figsize=(14, 6))
-    test_level = 160
-    old_array = old_aug.mean_cost(test_level, 1.0, 0.1)[0:25]
-    new_array = new_aug.mean_cost(test_level, 1.0, 0.1)[0:25]
-    x_values = old_aug.x_values[0:25]
+    stop_level = 30
+    old_array = old_aug.mean_cost(test_level_value, 1.0, 0.1)[1:stop_level]
+    new_array = new_aug.mean_cost(test_level_value, 1.0, 0.1)[1:stop_level]
+    x_values = old_aug.x_values[1:stop_level]
     ax3[0].plot(x_values, old_array, label="Old")
     ax3[0].plot(x_values, new_array, label="New")
     ax3[0].set_xlabel("Target Level")
@@ -113,9 +119,9 @@ def summary_plots(base_probability_value, level_scaling_value, level_norm_value,
     return return_column
 
 
-interactive_plot = pn.bind(summary_plots, base_probability, level_scaling, level_norm, level_weight, tool_bonus,
-                           exp_scale, exp_tier_power, exp_level_power)
-selection_column = pn.Column(base_probability, level_scaling, level_norm, level_weight, tool_bonus,
+interactive_plot = pn.bind(summary_plots, test_level, base_probability, level_scaling, level_norm, level_weight,
+                           tool_bonus, exp_scale, exp_tier_power, exp_level_power)
+selection_column = pn.Column(test_level, base_probability, level_scaling, level_norm, level_weight, tool_bonus,
                              exp_scale, exp_tier_power, exp_level_power)
 
 template = pn.template.FastListTemplate(
