@@ -68,11 +68,11 @@ test_level.value = 160
 base_probability = pn.widgets.EditableFloatSlider(name='base_probability', start=0.5, end=1.0, step=0.01)
 base_probability.value = 0.9
 level_scaling = pn.widgets.EditableFloatSlider(name='level_scaling', start=0.0, end=3.0, step=0.01)
-level_scaling.value = 1.33
+level_scaling.value = 1.5
 level_norm = pn.widgets.EditableFloatSlider(name='level_norm', start=100, end=300, step=1)
-level_norm.value = 200
+level_norm.value = 203
 level_weight = pn.widgets.EditableFloatSlider(name='level_weight', start=0.01, end=2.0, step=0.01)
-level_weight.value = 1.0
+level_weight.value = 1.25
 tool_bonus = pn.widgets.EditableFloatSlider(name='tool_bonus', start=0, end=100, step=1)
 tool_bonus.value = 50
 exp_scale = pn.widgets.EditableFloatSlider(name='exp_scale', start=1, end=100, step=1)
@@ -82,7 +82,9 @@ exp_tier_power.value = 2.5
 exp_level_power = pn.widgets.EditableFloatSlider(name='exp_level_power', start=1, end=4, step=0.01)
 exp_level_power.value = 1.25
 old_chances = pn.widgets.EditableFloatSlider(name='chances', start=0.0, end=0.20, step=0.01)
-old_chances.value = 0.0
+old_chances.value = 0.05
+aug_cost_fraction = pn.widgets.EditableFloatSlider(name='aug cost fraction', start=0.01, end=4.0, step=0.01)
+aug_cost_fraction.value = 0.1
 
 info_string = """
 # Base Formulas
@@ -100,7 +102,8 @@ info_panel = pn.pane.Markdown(info_string)
 
 # The plots
 def summary_plots(test_level_value, base_probability_value, level_scaling_value, level_norm_value,
-                  level_weight_value, tool_bonus_value, exp_scale_value, exp_tier_power_value, exp_level_power_value, old_chances_value):
+                  level_weight_value, tool_bonus_value, exp_scale_value, exp_tier_power_value, exp_level_power_value,
+                  old_chances_value, aug_cost_fraction_value):
     new_aug.base_probability = base_probability_value
     new_aug.level_scaling = level_scaling_value
     new_aug.level_norm = level_norm_value
@@ -149,17 +152,21 @@ def summary_plots(test_level_value, base_probability_value, level_scaling_value,
     mpl_pane_2 = pn.pane.Matplotlib(fig2, height=400)
     # Cost
     fig3, ax3 = plt.subplots(1, 2, figsize=(14, 6))
-    stop_level = 30
-    old_array = old_aug.mean_cost(test_level_value, 1.0, 0.1)[1:stop_level]
-    new_array = new_aug.mean_cost(test_level_value, 1.0, 0.1)[1:stop_level]
-    x_values = old_aug.x_values[1:stop_level]
+    start_level = 5
+    stop_level = 26
+    old_array = old_aug.mean_cost(test_level_value, 1.0, aug_cost_fraction_value)[start_level:stop_level]
+    new_array = new_aug.mean_cost(test_level_value, 1.0, aug_cost_fraction_value)[start_level:stop_level]
+    new_sb = new_aug.soulbind_cost(1.0, aug_cost_fraction_value)[start_level:stop_level]
+    x_values = old_aug.x_values[start_level:stop_level]
     ax3[0].plot(x_values, old_array, label="Old")
     ax3[0].plot(x_values, new_array, label="New")
+    ax3[0].plot(x_values, new_sb, label="Soulbound")
     ax3[0].set_xlabel("Target Level")
     ax3[0].set_ylabel("Cost (normalized to base=1, aug=0.1)")
     ax3[0].set_xlim(x_values.min(), x_values.max())
     ax3[0].set_ylim(bottom=1)
     ax3[0].set_yscale("log")
+    ax3[0].grid(which='both')
     ax3[0].legend()
     ax3[1].plot(x_values, new_array / old_array)
     ax3[1].set_xlabel("Character Level")
@@ -172,9 +179,9 @@ def summary_plots(test_level_value, base_probability_value, level_scaling_value,
 
 
 interactive_plot = pn.bind(summary_plots, test_level, base_probability, level_scaling, level_norm, level_weight,
-                           tool_bonus, exp_scale, exp_tier_power, exp_level_power, old_chances)
+                           tool_bonus, exp_scale, exp_tier_power, exp_level_power, old_chances, aug_cost_fraction)
 selection_column = pn.Column(test_level, base_probability, level_scaling, level_norm, level_weight, tool_bonus,
-                             exp_scale, exp_tier_power, exp_level_power, old_chances)
+                             exp_scale, exp_tier_power, exp_level_power, old_chances, aug_cost_fraction)
 
 template = pn.template.FastListTemplate(
     title='Idlescape Augmenting',
